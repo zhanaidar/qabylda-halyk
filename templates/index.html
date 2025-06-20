@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qabylda HR Tech Eval - {{ organization.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, {{ organization.colors.primary }} 0%, #2a5298 50%, {{ organization.colors.primary }} 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 12s ease infinite;
+            min-height: 100vh;
+            overflow: hidden;
+            color: white;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Казахские орнаменты на фоне */
+        .kazakh-ornaments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .ornament {
+            position: absolute;
+            border: 2px solid rgba(255, 215, 0, 0.15);
+            border-radius: 50%;
+            animation: ornamentFloat 15s ease-in-out infinite;
+        }
+
+        .ornament:nth-child(1) {
+            width: 150px;
+            height: 150px;
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+            border-style: dashed;
+        }
+
+        .ornament:nth-child(2) {
+            width: 100px;
+            height: 100px;
+            top: 60%;
+            right: 8%;
+            animation-delay: 5s;
+            border-style: dotted;
+        }
+
+        .ornament:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            top: 30%;
+            left: 85%;
+            animation-delay: 10s;
+        }
+
+        .ornament:nth-child(4) {
+            width: 120px;
+            height: 120px;
+            bottom: 15%;
+            left: 15%;
+            animation-delay: 7s;
+            border-style: dashed;
+        }
+
+        @keyframes ornamentFloat {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.3;
+            }
+            25% {
+                transform: translateY(-20px) rotate(90deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-10px) rotate(180deg);
+                opacity: 0.2;
+            }
+            75% {
+                transform: translateY(-30px) rotate(270deg);
+                opacity: 0.7;
+            }
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        .main-logo {
+            position: relative;
+            z-index: 15;
+            margin-bottom: 40px;
+            animation: logoFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        .logo-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+        }
+
+        /* Анимированная рамка вокруг логотипа */
+        .animated-frame {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            width: 160px;
+            height: 160px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+            animation: frameMorph 10s ease-in-out infinite;
+        }
+
+        @keyframes frameMorph {
+            0%, 100% {
+                clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+                transform: rotate(0deg) scale(1);
+                border-color: rgba(255, 255, 255, 0.4);
+            }
+            20% {
+                clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+                transform: rotate(45deg) scale(1.1);
+                border-color: rgba(255, 255, 255, 0.6);
+            }
+            40% {
+                clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+                transform: rotate(90deg) scale(0.95);
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            60% {
+                clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+                transform: rotate(135deg) scale(1.05);
+                border-color: rgba(255, 255, 255, 0.7);
+            }
+            80% {
+                clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+                transform: rotate(180deg) scale(1);
+                border-color: rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        /* Логотип банка */
+        .bank-logo {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+            object-fit: cover;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+        }
+
+        /* Заголовки */
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ffffff 0%, #e8f4f8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+            100% { text-shadow: 0 0 30px rgba(255, 255, 255, 0.6); }
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            font-weight: 400;
+            text-align: center;
+            margin-bottom: 50px;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
+        }
+
+        /* Кнопки */
+        .button-container {
+            display: flex;
+            gap: 30px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .main-btn {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+            color: {{ organization.colors.accent }};
+            padding: 18px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            min-width: 250px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .main-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .main-btn:hover:before {
+            left: 100%;
+        }
+
+        .main-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 255, 255, 0.3);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            color: white;
+            padding: 15px 35px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 250px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Плавающие частицы */
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 215, 0, 0.6);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 20%; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 30%; animation-delay: 4s; }
+        .particle:nth-child(4) { left: 40%; animation-delay: 6s; }
+        .particle:nth-child(5) { left: 50%; animation-delay: 8s; }
+        .particle:nth-child(6) { left: 60%; animation-delay: 10s; }
+        .particle:nth-child(7) { left: 70%; animation-delay: 12s; }
+        .particle:nth-child(8) { left: 80%; animation-delay: 14s; }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+                padding: 0 20px;
+            }
+            
+            .button-container {
+                gap: 20px;
+            }
+            
+            .main-btn, .secondary-btn {
+                min-width: 200px;
+                padding: 15px 30px;
+            }
+            
+            .ornament {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Казахские орнаменты -->
+    <div class="kazakh-ornaments">
+        <div class="ornament"></div>
+        <div class="ornament"></div>
+        <div class="ornament"></div>
+        <div class="ornament"></div>
+    </div>
+
+    <!-- Плавающие частицы -->
+    <div class="floating-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="container">
+        <div class="main-logo">
+            <div class="logo-container">
+                <div class="animated-frame"></div>
+                <img src="{{ organization.logo }}" alt="{{ organization.name }}" class="bank-logo">
+            </div>
+        </div>
+
+        <h1 class="main-title">HR Tech Eval</h1>
+        <p class="subtitle">Система автоматизированной оценки IT-специалистов</p>
+
+        <div class="button-container">
+            <a href="/login" class="main-btn">
+                🏛️ Войти как HR
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Проверяем роутинг при загрузке
+        function checkRoute() {
+            const urlPath = window.location.pathname;
+            
+            if (urlPath === '/' || urlPath === '') {
+                // Главная страница - показываем кнопку HR (уже показана)
+                console.log('Главная страница - показ кнопки HR');
+            } else if (urlPath.match(/^\/[a-zA-Z0-9]+$/)) {
+                // Есть тестовый код - показываем кнопку теста
+                const testCode = urlPath.substring(1);
+                showTestInterface(testCode);
+            }
+        }
+
+        function showTestInterface(testCode) {
+            // Интерфейс для кандидата
+            document.querySelector('.button-container').innerHTML = `
+                <a href="#" class="main-btn" onclick="startTest('${testCode}')">
+                    📝 Начать тест
+                </a>
+                <p style="margin-top: 20px; opacity: 0.8; font-size: 14px;">
+                    Код теста: ${testCode}
+                </p>
+            `;
+            
+            // Меняем подзаголовок для кандидата
+            document.querySelector('.subtitle').textContent = 'Добро пожаловать на тестирование IT-навыков!';
+        }
+
+        function startTest(testCode) {
+            alert(`Начинаем тест с кодом: ${testCode}`);
+            // Здесь будет переход на страницу прохождения теста
+        }
+
+        // Плавная анимация при загрузке
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 1s ease-in-out';
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+            
+            // Проверяем роутинг после загрузки
+            checkRoute();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
+hr_tech_eval.db
+
+# Temporary files
+temp/
+tmp/
+
+# Uploads
+uploads/
+
+# Environment variables (ВАЖНО!)
+.env
+.env.local
+.env.development
+.env.production
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Node modules (если будут)
+node_modules/
+
+# Secrets (НЕ КОММИТИМ!)
+config_local.py
+secrets.json
+
+# Test coverage
+.coverage
+htmlcov/
+
+# Pytest
+.pytest_cache/
