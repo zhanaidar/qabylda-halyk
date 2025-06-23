@@ -116,54 +116,57 @@
         };
 
         // Конфигурация технологий
+        // Конфигурация технологий И знаний
         const technologies = {
             "Data Scientist": {
                 "Общий": {
-                    required: ["Python", "SQL", "Scikit-learn"],
-                    optional: ["R", "TensorFlow", "PyTorch", "Docker", "Git"]
+                    required: ["Python", "Машинное обучение", "Статистика", "SQL", "Pandas/NumPy"],
+                    optional: ["R", "TensorFlow", "PyTorch", "Scikit-learn", "Docker", "Git", "A/B тестирование"]
                 },
                 "Computer Vision": {
-                    required: ["Python", "OpenCV", "PyTorch"],
-                    optional: ["TensorFlow", "C++", "CUDA", "Docker"]
+                    required: ["Python", "Машинное обучение", "Компьютерное зрение", "OpenCV", "PyTorch"],
+                    optional: ["TensorFlow", "CUDA", "C++", "Docker", "Математика", "Обработка изображений"]
                 },
                 "NLP": {
-                    required: ["Python", "NLTK", "Transformers"],
-                    optional: ["spaCy", "PyTorch", "TensorFlow", "Docker"]
+                    required: ["Python", "Машинное обучение", "Обработка языка", "NLTK", "Transformers"],
+                    optional: ["spaCy", "PyTorch", "TensorFlow", "Лингвистика", "Docker", "Hugging Face"]
                 },
                 "MLOps": {
-                    required: ["Python", "Docker", "Git"],
-                    optional: ["Kubernetes", "AWS", "MLflow", "Airflow"]
+                    required: ["Python", "Машинное обучение", "DevOps", "Docker", "Git"],
+                    optional: ["Kubernetes", "AWS/GCP", "MLflow", "Airflow", "CI/CD", "Мониторинг моделей"]
                 }
             },
             "Data Analyst": {
                 "Общий": {
-                    required: ["SQL", "Excel", "Python"],
-                    optional: ["R", "Tableau", "Power BI", "Git"]
+                    required: ["SQL", "Статистика", "Аналитическое мышление", "Excel", "Визуализация данных"],
+                    optional: ["Python", "R", "Tableau", "Power BI", "Google Analytics", "A/B тестирование"]
                 },
                 "Business Intelligence": {
-                    required: ["SQL", "Tableau", "Power BI"],
-                    optional: ["Python", "DAX", "ETL", "Data Warehouse"]
+                    required: ["SQL", "Бизнес-аналитика", "Tableau/Power BI", "KPI и метрики", "Дашборды"],
+                    optional: ["Python", "DAX", "ETL процессы", "Data Warehouse", "OLAP", "Reporting"]
                 },
                 "Marketing Analytics": {
-                    required: ["SQL", "Google Analytics", "Excel"],
-                    optional: ["Python", "R", "Tableau", "Facebook Ads"]
+                    required: ["SQL", "Маркетинговая аналитика", "Google Analytics", "Excel", "Метрики конверсии"],
+                    optional: ["Python", "R", "Facebook Ads", "Yandex.Metrica", "CRM системы", "Когортный анализ"]
                 }
             },
             "HR Specialist": {
                 "Generalist": {
-                    required: ["MS Office", "1C:ЗУП"],
-                    optional: ["SAP HR", "Workday", "HR системы"]
+                    required: ["Трудовое право РК", "HR процессы", "Рекрутинг", "Мотивация персонала", "MS Office"],
+                    optional: ["1C:ЗУП", "SAP HR", "Workday", "Performance management", "HR аналитика", "Change management"]
                 },
                 "Recruiter": {
-                    required: ["LinkedIn", "HH.ru", "MS Office"],
-                    optional: ["ATS системы", "Boolean search", "Telegram"]
+                    required: ["Методы подбора", "Интервьюирование", "LinkedIn/HH.ru", "Sourcing", "Boolean search"],
+                    optional: ["ATS системы", "HR-брендинг", "Telegram для рекрутинга", "Executive search", "Психология"]
                 },
                 "L&D Specialist": {
-                    required: ["MS Office", "LMS системы"],
-                    optional: ["Moodle", "iSpring", "Articulate", "Zoom"]
+                    required: ["Обучение взрослых", "Методы обучения", "LMS системы", "Оценка эффективности", "MS Office"],
+                    optional: ["Instructional Design", "Moodle", "iSpring", "Articulate", "Zoom", "Gamification", "Mentoring"]
                 }
             }
         };
+
+
 
         function updateSpecializations() {
             const position = document.getElementById('position').value;
