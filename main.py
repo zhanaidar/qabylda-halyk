@@ -358,19 +358,70 @@ async def test_database():
         
         conn = await asyncpg.connect(clean_url)
         
-        # Создаем простую таблицу
+        # Создаем таблицы для HR системы
         await conn.execute('''
-            CREATE TABLE IF NOT EXISTS simple_tests (
+            CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
-                test_code VARCHAR(50),
-                candidate_name VARCHAR(255),
-                created_at TIMESTAMP DEFAULT NOW()
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                role VARCHAR(100) NOT NULL,
+                department VARCHAR(100),
+                created_at TIMESTAMP DEFAULT NOW(),
+                is_active BOOLEAN DEFAULT TRUE
             )
         ''')
         
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS tests (
+                id SERIAL PRIMARY KEY,
+                test_code VARCHAR(50) UNIQUE NOT NULL,
+                candidate_name VARCHAR(255) NOT NULL,
+                candidate_email VARCHAR(255),
+                position VARCHAR(100) NOT NULL,
+                level VARCHAR(50) NOT NULL,
+                creator_email VARCHAR(255) NOT NULL,
+                custom_requirements TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                started_at TIMESTAMP,
+                completed_at TIMESTAMP,
+                expires_at TIMESTAMP,
+                total_score FLOAT DEFAULT 0.0,
+                final_evaluation TEXT,
+                status VARCHAR(50) DEFAULT 'created',
+                duration_minutes INTEGER,
+                violations_count INTEGER DEFAULT 0,
+                proctoring_data TEXT
+            )
+        ''')
+        
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS test_questions (
+                id SERIAL PRIMARY KEY,
+                test_id INTEGER REFERENCES tests(id) ON DELETE CASCADE,
+                question_number INTEGER NOT NULL,
+                question_type VARCHAR(50) NOT NULL,
+                question_text TEXT NOT NULL,
+                answer_text TEXT,
+                ai_score FLOAT,
+                ai_evaluation TEXT,
+                typing_speed FLOAT,
+                time_spent_seconds INTEGER,
+                answered_at TIMESTAMP
+            )
+        ''')
+        
+        # Проверяем созданные таблицы
+        tables = await conn.fetch("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+        table_names = [row['tablename'] for row in tables]
+        
         await conn.close()
         
-        return {"status": "success", "message": "Simple DB works!"}
+        return {
+            "status": "success", 
+            "message": "All tables created successfully!",
+            "tables": table_names
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
