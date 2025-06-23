@@ -23,6 +23,42 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 
+# Добавь эти функции после существующих импортов:
+
+async def get_db_connection():
+    """Получить подключение к БД"""
+    import asyncpg
+    from config import DATABASE_URL
+    clean_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+    return await asyncpg.connect(clean_url)
+
+async def create_user_if_not_exists(email: str, password: str, name: str, role: str, department: str):
+    """Создать пользователя если не существует"""
+    conn = await get_db_connection()
+    try:
+        # Проверяем существует ли пользователь
+        existing = await conn.fetchrow("SELECT id FROM users WHERE email = $1", email)
+        if not existing:
+            await conn.execute(
+                "INSERT INTO users (email, password_hash, name, role, department) VALUES ($1, $2, $3, $4, $5)",
+                email, password, name, role, department
+            )
+            print(f"✅ Создан пользователь: {email}")
+    finally:
+        await conn.close()
+
+async def verify_user_db(email: str, password: str):
+    """Проверить пользователя в БД"""
+    conn = await get_db_connection()
+    try:
+        user = await conn.fetchrow(
+            "SELECT email, name, role, department FROM users WHERE email = $1 AND password_hash = $2",
+            email.lower(), password
+        )
+        return dict(user) if user else None
+    finally:
+        await conn.close()
+
 app = FastAPI(
     title="Qabylda HR Tech Eval", 
     description="Система оценки IT-специалистов для Халык банка"
