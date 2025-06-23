@@ -16,8 +16,44 @@ from pathlib import Path
 # Импортируем настройки
 from config import ANTHROPIC_API_KEY, APP_HOST, APP_PORT, DEBUG
 
+# После существующих импортов добавь:
+from database.database import create_tables, get_db
+from database.models import User, Test, TestQuestion
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from contextlib import asynccontextmanager
+
 # Создаем приложение FastAPI
-app = FastAPI(title="Qabylda HR Tech Eval", description="Система оценки IT-специалистов для Халык банка")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    try:
+        await create_tables()
+        print("✅ Таблицы созданы успешно!")
+    except Exception as e:
+        print(f"❌ Ошибка создания таблиц: {e}")
+    
+    yield
+    
+    # Shutdown (если нужно)
+    print("🔄 Завершение работы приложения")
+
+# Измени создание app на:
+app = FastAPI(
+    title="Qabylda HR Tech Eval", 
+    description="Система оценки IT-специалистов для Халык банка",
+    lifespan=lifespan
+)
+
+@app.on_event("startup")
+async def startup_event():
+    """Создаем таблицы при запуске приложения"""
+    try:
+        await create_tables()
+        print("✅ Таблицы созданы успешно!")
+    except Exception as e:
+        print(f"❌ Ошибка создания таблиц: {e}")
 
 # Настраиваем шаблоны и статические файлы
 templates = Jinja2Templates(directory="templates")
@@ -335,21 +371,25 @@ async def evaluate_answer(position: str, level: str, question: str, answer: str)
         pass
     
     return score
-
-
+    
+    
 @app.get("/test-db")
 async def test_database():
     try:
         from config import DATABASE_URL
         import asyncpg
         
-        # Попытка подключения к базе
+        # Тест подключения
         conn = await asyncpg.connect(DATABASE_URL)
+        
+        # Проверяем таблицы
+        tables = await conn.fetch("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
         await conn.close()
         
         return {
             "status": "success", 
             "message": "Database connection successful!",
+            "tables": [row['tablename'] for row in tables],
             "db_host": DATABASE_URL.split('@')[1].split(':')[0] if DATABASE_URL else "unknown"
         }
     except Exception as e:
