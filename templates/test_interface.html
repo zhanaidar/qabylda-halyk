@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестирование - {{ test.candidate_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, {{ organization.colors.primary }} 0%, #2a5298 50%, {{ organization.colors.primary }} 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 12s ease infinite;
+            min-height: 100vh;
+            color: white;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .test-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 50px 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: {{ organization.colors.accent }};
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .test-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, {{ organization.colors.primary }}, {{ organization.colors.secondary }}, {{ organization.colors.primary }});
+            background-size: 200% 100%;
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .logo-section {
+            margin-bottom: 30px;
+        }
+
+        .bank-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin: 0 auto 20px;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.1));
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: {{ organization.colors.accent }};
+            margin-bottom: 15px;
+        }
+
+        .test-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: {{ organization.colors.accent }};
+        }
+
+        .stages-info {
+            background: #e8f4f8;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .stage-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(29, 181, 132, 0.2);
+        }
+
+        .stage-item:last-child {
+            border-bottom: none;
+        }
+
+        .stage-number {
+            background: {{ organization.colors.primary }};
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .stage-content h4 {
+            color: {{ organization.colors.accent }};
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .stage-content p {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .start-button {
+            background: linear-gradient(135deg, {{ organization.colors.primary }} 0%, #2a5298 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .start-button:hover::before {
+            left: 100%;
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(29, 181, 132, 0.4);
+        }
+
+        .timer-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .timer-warning strong {
+            color: #d63031;
+        }
+
+        @media (max-width: 768px) {
+            .test-card {
+                padding: 30px 25px;
+                margin: 20px;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-card">
+            <!-- Логотип организации -->
+            <div class="logo-section">
+                <img src="{{ organization.logo }}" alt="{{ organization.name }}" class="bank-logo">
+            </div>
+
+            <!-- Приветствие -->
+            <h1 class="welcome-title">Добро пожаловать!</h1>
+            <p style="font-size: 1.2rem; color: #6c757d; margin-bottom: 30px;">
+                {{ organization.short_name }} • Система оценки IT-специалистов
+            </p>
+
+            <!-- Информация о тесте -->
+            <div class="test-info">
+                <div class="info-row">
+                    <span class="info-label">👤 Кандидат:</span>
+                    <span class="info-value">{{ test.candidate_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">💼 Позиция:</span>
+                    <span class="info-value">{{ test.position }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📊 Уровень:</span>
+                    <span class="info-value">{{ test.level|title }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">🔑 Код теста:</span>
+                    <span class="info-value">{{ test.test_code }}</span>
+                </div>
+            </div>
+
+            <!-- Этапы тестирования -->
+            <div class="stages-info">
+                <h3 style="color: {{ organization.colors.accent }}; margin-bottom: 20px; text-align: center;">
+                    📋 Этапы тестирования
+                </h3>
+                
+                <div class="stage-item">
+                    <div class="stage-number">1</div>
+                    <div class="stage-content">
+                        <h4>Скрининг</h4>
+                        <p>5-7 базовых вопросов • 10-15 минут • Проходной балл</p>
+                    </div>
+                </div>
+                
+                <div class="stage-item">
+                    <div class="stage-number">2</div>
+                    <div class="stage-content">
+                        <h4>Углубленное интервью</h4>
+                        <p>3 больших вопроса с ИИ • 15 минут • Основная оценка</p>
+                    </div>
+                </div>
+                
+                <div class="stage-item">
+                    <div class="stage-number">3</div>
+                    <div class="stage-content">
+                        <h4>Дополнительные навыки</h4>
+                        <p>Бонусные технологии • 5 минут за навык • Опционально</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Предупреждение о времени -->
+            <div class="timer-warning">
+                <strong>⏰ Важно:</strong> У вас есть <strong>24 часа</strong> на прохождение всех этапов. 
+                Между этапами можно делать перерывы до 12 часов. 
+                После начала этапа его нужно завершить полностью.
+            </div>
+
+            <!-- Кнопка начала -->
+            <button class="start-button" onclick="startTest()">
+                🚀 Начать тестирование
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function startTest() {
+            if (confirm('Вы готовы начать тестирование? После начала этап нужно завершить полностью.')) {
+                // Переходим к первому этапу
+                window.location.href = `/${window.location.pathname.split('/')[1]}/stage/1`;
+            }
+        }
+
+        // Анимация при загрузке
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 1s ease-in-out';
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
