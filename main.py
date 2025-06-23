@@ -376,21 +376,25 @@ async def evaluate_answer(position: str, level: str, question: str, answer: str)
 @app.get("/test-db")
 async def test_database():
     try:
-        from config import DATABASE_URL
-        import asyncpg
+        from database.database import AsyncSessionLocal
         
-        # Тест подключения
-        conn = await asyncpg.connect(DATABASE_URL)
+        # Тестируем SQLAlchemy подключение
+        async with AsyncSessionLocal() as session:
+            result = await session.execute("SELECT 1 as test")
+            test_value = result.scalar()
         
         # Проверяем таблицы
-        tables = await conn.fetch("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
-        await conn.close()
+        async with AsyncSessionLocal() as session:
+            tables_result = await session.execute(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+            )
+            tables = [row[0] for row in tables_result.fetchall()]
         
         return {
             "status": "success", 
             "message": "Database connection successful!",
-            "tables": [row['tablename'] for row in tables],
-            "db_host": DATABASE_URL.split('@')[1].split(':')[0] if DATABASE_URL else "unknown"
+            "test_query": test_value,
+            "tables": tables
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
