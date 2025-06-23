@@ -3,17 +3,10 @@ from sqlalchemy.orm import sessionmaker
 from config import DATABASE_URL
 from .models import Base
 
-# Исправляем URL для asyncpg
-def get_async_database_url():
-    if DATABASE_URL.startswith("postgresql+asyncpg://"):
-        # Убираем +asyncpg для asyncpg драйвера
-        return DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
-    return DATABASE_URL
+# Создаем асинхронный движок
+engine = create_async_engine(DATABASE_URL, echo=True)
 
-# Создаем асинхронный движок с правильным URL
-engine = create_async_engine(get_async_database_url(), echo=True)
-
-# Остальное без изменений...
+# Создаем фабрику сессий
 AsyncSessionLocal = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
