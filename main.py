@@ -17,8 +17,8 @@ from pathlib import Path
 from config import ANTHROPIC_API_KEY, APP_HOST, APP_PORT, DEBUG
 
 # После существующих импортов добавь:
-from database.database import create_tables, get_db
-from database.models import User, Test, TestQuestion
+# from database.database import create_tables, get_db
+# from database.models import User, Test, TestQuestion
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -45,15 +45,6 @@ app = FastAPI(
     description="Система оценки IT-специалистов для Халык банка",
     lifespan=lifespan
 )
-
-@app.on_event("startup")
-async def startup_event():
-    """Создаем таблицы при запуске приложения"""
-    try:
-        await create_tables()
-        print("✅ Таблицы созданы успешно!")
-    except Exception as e:
-        print(f"❌ Ошибка создания таблиц: {e}")
 
 # Настраиваем шаблоны и статические файлы
 templates = Jinja2Templates(directory="templates")
@@ -371,31 +362,32 @@ async def evaluate_answer(position: str, level: str, question: str, answer: str)
         pass
     
     return score
+
     
-    
-@app.get("/test-db")
+@app.get("/test-db") 
 async def test_database():
     try:
-        from database.database import AsyncSessionLocal
+        import asyncpg
+        from config import DATABASE_URL
         
-        # Тестируем SQLAlchemy подключение
-        async with AsyncSessionLocal() as session:
-            result = await session.execute("SELECT 1 as test")
-            test_value = result.scalar()
+        # Убираем +asyncpg для asyncpg
+        clean_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
         
-        # Проверяем таблицы
-        async with AsyncSessionLocal() as session:
-            tables_result = await session.execute(
-                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+        conn = await asyncpg.connect(clean_url)
+        
+        # Создаем простую таблицу
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS simple_tests (
+                id SERIAL PRIMARY KEY,
+                test_code VARCHAR(50),
+                candidate_name VARCHAR(255),
+                created_at TIMESTAMP DEFAULT NOW()
             )
-            tables = [row[0] for row in tables_result.fetchall()]
+        ''')
         
-        return {
-            "status": "success", 
-            "message": "Database connection successful!",
-            "test_query": test_value,
-            "tables": tables
-        }
+        await conn.close()
+        
+        return {"status": "success", "message": "Simple DB works!"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
