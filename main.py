@@ -59,9 +59,36 @@ async def verify_user_db(email: str, password: str):
     finally:
         await conn.close()
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await create_user_if_not_exists(
+        "janaydar@halykbank.kz", 
+        "123456", 
+        "Жанайдар", 
+        "HR Manager", 
+        "IT"
+    )
+    await create_user_if_not_exists(
+        "janaydarK@halykbank.kz", 
+        "123456", 
+        "Жанайдар К.", 
+        "Senior HR Manager", 
+        "IT"
+    )
+    print("✅ Тестовые пользователи созданы/проверены")
+    
+    yield
+    
+    # Shutdown
+    print("🔄 Завершение работы")
+    
 app = FastAPI(
     title="Qabylda HR Tech Eval", 
-    description="Система оценки IT-специалистов для Халык банка"
+    description="Система оценки IT-специалистов для Халык банка",
+    lifespan=lifespan
 )
 
 
@@ -125,18 +152,14 @@ class AnswerRequest(BaseModel):
     session_id: str = ""
 
 # Утилиты для аутентификации
-def verify_user(email: str, password: str):
-    email_lower = email.lower()
-    user = users_db.get(email_lower)
-    if user and user["password"] == password:
-        return user
-    return None
 
 def get_organization_from_subdomain(request: Request):
     host = request.headers.get("host", "")
     if "halyk." in host or host.startswith("halyk"):
         return "halyk"
     return "halyk"  # По умолчанию
+
+
 
 # ===== ГЛАВНЫЕ СТРАНИЦЫ =====
 
@@ -182,11 +205,10 @@ async def login_page(request: Request):
 @app.post("/login")
 async def login(email: str = Form(...), password: str = Form(...)):
     """Обработка входа HR"""
-    user = verify_user(email, password)
+    user = await verify_user_db(email, password)  # ← Новая функция с БД
     if not user:
         raise HTTPException(status_code=401, detail="Неверный email или пароль")
     
-    # В реальном проекте здесь будет JWT токен
     return {
         "status": "success",
         "user": {
