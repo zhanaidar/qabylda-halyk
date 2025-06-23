@@ -410,6 +410,33 @@ async def test_database():
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+    
+    
+@app.get("/admin-db", response_class=HTMLResponse)
+async def admin_database_view(request: Request):
+    """Красивый просмотр данных БД"""
+    try:
+        import asyncpg
+        from config import DATABASE_URL
+        
+        clean_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+        conn = await asyncpg.connect(clean_url)
+        
+        # Получаем данные
+        users = await conn.fetch("SELECT * FROM users ORDER BY created_at DESC")
+        tests = await conn.fetch("SELECT * FROM tests ORDER BY created_at DESC")
+        questions = await conn.fetch("SELECT * FROM test_questions ORDER BY id DESC LIMIT 10")
+        
+        await conn.close()
+        
+        return templates.TemplateResponse("admin_db.html", {
+            "request": request,
+            "users": [dict(row) for row in users],
+            "tests": [dict(row) for row in tests],
+            "questions": [dict(row) for row in questions]
+        })
+    except Exception as e:
+        return f"<h1>Ошибка: {e}</h1>"
 
     
 @app.get("/{test_code}", response_class=HTMLResponse)
