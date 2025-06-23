@@ -317,7 +317,7 @@ async def create_test_page(request: Request):
     })
 
 
-@app.get("/test-db") 
+@app.get("/test-db")
 async def test_database():
     try:
         import asyncpg
@@ -328,7 +328,7 @@ async def test_database():
         
         conn = await asyncpg.connect(clean_url)
         
-        # Создаем таблицы для HR системы
+        # СОЗДАЕМ ТАБЛИЦЫ (как было раньше)
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -381,16 +381,32 @@ async def test_database():
             )
         ''')
         
-        # Проверяем созданные таблицы
+        # ПРОВЕРЯЕМ СОЗДАННЫЕ ТАБЛИЦЫ
         tables = await conn.fetch("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
         table_names = [row['tablename'] for row in tables]
+        
+        # СМОТРИМ ДАННЫЕ В ТАБЛИЦАХ
+        data = {}
+        
+        # Пользователи
+        users = await conn.fetch("SELECT email, name, role, created_at FROM users LIMIT 5")
+        data['users'] = [dict(row) for row in users]
+        
+        # Тесты
+        tests = await conn.fetch("SELECT test_code, candidate_name, position, level, status, created_at FROM tests LIMIT 5")
+        data['tests'] = [dict(row) for row in tests]
+        
+        # Вопросы тестов
+        questions = await conn.fetch("SELECT test_id, question_number, question_type, answered_at FROM test_questions LIMIT 5")
+        data['test_questions'] = [dict(row) for row in questions]
         
         await conn.close()
         
         return {
             "status": "success", 
-            "message": "All tables created successfully!",
-            "tables": table_names
+            "message": "Tables created successfully + data shown!",
+            "tables": table_names,
+            "data": data
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
