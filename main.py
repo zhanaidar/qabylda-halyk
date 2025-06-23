@@ -22,29 +22,12 @@ from config import ANTHROPIC_API_KEY, APP_HOST, APP_PORT, DEBUG
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from contextlib import asynccontextmanager
 
-# Создаем приложение FastAPI
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    try:
-        await create_tables()
-        print("✅ Таблицы созданы успешно!")
-    except Exception as e:
-        print(f"❌ Ошибка создания таблиц: {e}")
-    
-    yield
-    
-    # Shutdown (если нужно)
-    print("🔄 Завершение работы приложения")
-
-# Измени создание app на:
 app = FastAPI(
     title="Qabylda HR Tech Eval", 
-    description="Система оценки IT-специалистов для Халык банка",
-    lifespan=lifespan
+    description="Система оценки IT-специалистов для Халык банка"
 )
+
 
 # Настраиваем шаблоны и статические файлы
 templates = Jinja2Templates(directory="templates")
