@@ -336,6 +336,26 @@ async def evaluate_answer(position: str, level: str, question: str, answer: str)
     
     return score
 
+
+@app.get("/test-db")
+async def test_database():
+    try:
+        from config import DATABASE_URL
+        import asyncpg
+        
+        # Попытка подключения к базе
+        conn = await asyncpg.connect(DATABASE_URL)
+        await conn.close()
+        
+        return {
+            "status": "success", 
+            "message": "Database connection successful!",
+            "db_host": DATABASE_URL.split('@')[1].split(':')[0] if DATABASE_URL else "unknown"
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 # ===== ОБРАБОТКА ОШИБОК =====
 
 @app.exception_handler(404)
