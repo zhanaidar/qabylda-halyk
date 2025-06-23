@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать тест - Qabylda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { color: #1DB584; font-size: 2rem; margin-bottom: 10px; }
+        .form-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 25px; }
+        .form-label { display: block; font-weight: 600; color: #2C3E50; margin-bottom: 8px; }
+        .form-select, .form-input { width: 100%; padding: 12px 16px; border: 2px solid #E8F4F8; border-radius: 8px; font-size: 16px; }
+        .form-select:focus, .form-input:focus { outline: none; border-color: #1DB584; }
+        .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .tech-item { display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8f9fa; border-radius: 6px; }
+        .tech-checkbox { width: 18px; height: 18px; }
+        .btn-primary { background: #1DB584; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+        .btn-primary:hover { background: #159A73; }
+        .section-title { font-size: 1.2rem; color: #2C3E50; margin: 30px 0 15px 0; border-bottom: 2px solid #1DB584; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Создать новый тест</h1>
+            <p>Система автоматизированной оценки IT-специалистов</p>
+        </div>
+
+        <div class="form-card">
+            <form id="createTestForm">
+                <!-- Данные кандидата -->
+                <div class="section-title">👤 Данные кандидата</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Имя и фамилия кандидата</label>
+                    <input type="text" class="form-input" id="candidateName" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email кандидата</label>
+                    <input type="email" class="form-input" id="candidateEmail" required>
+                </div>
+
+                <!-- Специальность и уровень -->
+                <div class="section-title">💼 Позиция</div>
+
+                <div class="form-group">
+                    <label class="form-label">Специальность</label>
+                    <select class="form-select" id="position" onchange="updateSpecializations()">
+                        <option value="">Выберите специальность</option>
+                        <option value="Data Scientist">Data Scientist</option>
+                        <option value="Data Analyst">Data Analyst</option>
+                        <option value="HR Specialist">HR Specialist</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Специализация</label>
+                    <select class="form-select" id="specialization">
+                        <option value="">Сначала выберите специальность</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Уровень</label>
+                    <select class="form-select" id="level">
+                        <option value="">Выберите уровень</option>
+                        <option value="junior">Junior</option>
+                        <option value="middle">Middle</option>
+                        <option value="senior">Senior</option>
+                    </select>
+                </div>
+
+                <!-- Технологии -->
+                <div class="section-title">🛠️ Технологии для тестирования</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Обязательные технологии (нельзя изменить)</label>
+                    <div class="tech-grid" id="requiredTech">
+                        <!-- Заполнится автоматически -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Дополнительные технологии (бонусные)</label>
+                    <div class="tech-grid" id="optionalTech">
+                        <!-- Заполнится автоматически -->
+                    </div>
+                </div>
+
+                <!-- Дополнительные требования -->
+                <div class="section-title">📝 Дополнительно</div>
+
+                <div class="form-group">
+                    <label class="form-label">Особые требования (опционально)</label>
+                    <textarea class="form-input" id="customRequirements" rows="3" placeholder="Например: опыт работы с банковскими системами..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    🚀 Создать тест
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация специализаций
+        const specializations = {
+            "Data Scientist": ["Общий", "Computer Vision", "NLP", "MLOps"],
+            "Data Analyst": ["Общий", "Business Intelligence", "Marketing Analytics"],
+            "HR Specialist": ["Generalist", "Recruiter", "L&D Specialist"]
+        };
+
+        // Конфигурация технологий
+        const technologies = {
+            "Data Scientist": {
+                "Общий": {
+                    required: ["Python", "SQL", "Scikit-learn"],
+                    optional: ["R", "TensorFlow", "PyTorch", "Docker", "Git"]
+                },
+                "Computer Vision": {
+                    required: ["Python", "OpenCV", "PyTorch"],
+                    optional: ["TensorFlow", "C++", "CUDA", "Docker"]
+                },
+                "NLP": {
+                    required: ["Python", "NLTK", "Transformers"],
+                    optional: ["spaCy", "PyTorch", "TensorFlow", "Docker"]
+                },
+                "MLOps": {
+                    required: ["Python", "Docker", "Git"],
+                    optional: ["Kubernetes", "AWS", "MLflow", "Airflow"]
+                }
+            },
+            "Data Analyst": {
+                "Общий": {
+                    required: ["SQL", "Excel", "Python"],
+                    optional: ["R", "Tableau", "Power BI", "Git"]
+                },
+                "Business Intelligence": {
+                    required: ["SQL", "Tableau", "Power BI"],
+                    optional: ["Python", "DAX", "ETL", "Data Warehouse"]
+                },
+                "Marketing Analytics": {
+                    required: ["SQL", "Google Analytics", "Excel"],
+                    optional: ["Python", "R", "Tableau", "Facebook Ads"]
+                }
+            },
+            "HR Specialist": {
+                "Generalist": {
+                    required: ["MS Office", "1C:ЗУП"],
+                    optional: ["SAP HR", "Workday", "HR системы"]
+                },
+                "Recruiter": {
+                    required: ["LinkedIn", "HH.ru", "MS Office"],
+                    optional: ["ATS системы", "Boolean search", "Telegram"]
+                },
+                "L&D Specialist": {
+                    required: ["MS Office", "LMS системы"],
+                    optional: ["Moodle", "iSpring", "Articulate", "Zoom"]
+                }
+            }
+        };
+
+        function updateSpecializations() {
+            const position = document.getElementById('position').value;
+            const specializationSelect = document.getElementById('specialization');
+            
+            specializationSelect.innerHTML = '<option value="">Выберите специализацию</option>';
+            
+            if (position && specializations[position]) {
+                specializations[position].forEach(spec => {
+                    const option = document.createElement('option');
+                    option.value = spec;
+                    option.textContent = spec;
+                    specializationSelect.appendChild(option);
+                });
+            }
+            
+            updateTechnologies();
+        }
+
+        function updateTechnologies() {
+            const position = document.getElementById('position').value;
+            const specialization = document.getElementById('specialization').value;
+            
+            const requiredDiv = document.getElementById('requiredTech');
+            const optionalDiv = document.getElementById('optionalTech');
+            
+            requiredDiv.innerHTML = '';
+            optionalDiv.innerHTML = '';
+            
+            if (position && specialization && technologies[position] && technologies[position][specialization]) {
+                const tech = technologies[position][specialization];
+                
+                // Обязательные технологии
+                tech.required.forEach(techName => {
+                    const div = document.createElement('div');
+                    div.className = 'tech-item';
+                    div.innerHTML = `
+                        <input type="checkbox" class="tech-checkbox" checked disabled>
+                        <span>${techName}</span>
+                    `;
+                    requiredDiv.appendChild(div);
+                });
+                
+                // Дополнительные технологии
+                tech.optional.forEach(techName => {
+                    const div = document.createElement('div');
+                    div.className = 'tech-item';
+                    div.innerHTML = `
+                        <input type="checkbox" class="tech-checkbox" name="optionalTech" value="${techName}">
+                        <span>${techName}</span>
+                    `;
+                    optionalDiv.appendChild(div);
+                });
+            }
+        }
+
+        // Обработка отправки формы
+        document.getElementById('createTestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                candidate_name: document.getElementById('candidateName').value,
+                candidate_email: document.getElementById('candidateEmail').value,
+                position: document.getElementById('position').value,
+                specialization: document.getElementById('specialization').value,
+                level: document.getElementById('level').value,
+                custom_requirements: document.getElementById('customRequirements').value,
+                optional_technologies: Array.from(document.querySelectorAll('input[name="optionalTech"]:checked')).map(cb => cb.value)
+            };
+            
+            try {
+                const response = await fetch('/api/create-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    alert(`Тест создан! Код: ${result.test_code}\nСсылка: ${window.location.origin}/${result.test_code}`);
+                    window.location.href = '/dashboard';
+                } else {
+                    alert('Ошибка: ' + result.detail);
+                }
+            } catch (error) {
+                alert('Ошибка отправки: ' + error.message);
+            }
+        });
+
+        // Обновляем технологии при изменении специализации
+        document.getElementById('specialization').addEventListener('change', updateTechnologies);
+    </script>
+</body>
+</html>

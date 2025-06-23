@@ -141,10 +141,13 @@ class LoginRequest(BaseModel):
     password: str
 
 class TestRequest(BaseModel):
+    candidate_name: str
+    candidate_email: str
     position: str
+    specialization: str = "Общий"
     level: str
-    candidate_data: dict = {}
     custom_requirements: str = ""
+    optional_technologies: list = []
 
 class AnswerRequest(BaseModel):
     question: str
@@ -234,48 +237,39 @@ async def dashboard(request: Request):
 
 # ===== API ДЛЯ РАБОТЫ С ТЕСТАМИ =====
 
+
 @app.post("/api/create-test")
 async def create_test(test_request: TestRequest):
-    """Создание нового теста"""
+    """Создание нового теста с сохранением в БД"""
     try:
         # Генерируем уникальный код теста
         test_code = str(uuid.uuid4())[:8].upper()
         
-        # Генерируем первый вопрос
-        question = await generate_main_question(
-            test_request.position, 
-            test_request.level, 
-            1,
-            test_request.custom_requirements
-        )
-        
-        # Создаем сессию теста
-        test_sessions[test_code] = {
-            "test_code": test_code,
-            "position": test_request.position,
-            "level": test_request.level,
-            "candidate_data": test_request.candidate_data,
-            "custom_requirements": test_request.custom_requirements,
-            "created_at": datetime.datetime.now(),
-            "expires_at": datetime.datetime.now() + datetime.timedelta(days=7),
-            "status": "created",
-            "questions_data": [
-                {
-                    "main": {"question": question, "answer": "", "score": 0},
-                    "extension": {"question": "", "answer": "", "score": 0},
-                    "deep": {"question": "", "answer": "", "score": 0},
-                    "completed": False
-                }
-            ],
-            "current_main_question": 1,
-            "completed": False
-        }
+        # Сохраняем в БД
+        conn = await get_db_connection()
+        try:
+            await conn.execute("""
+                INSERT INTO tests (test_code, candidate_name, candidate_email, position, level, 
+                                 creator_email, custom_requirements, status, expires_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, 'created', $8)
+            """, 
+                test_code,
+                test_request.candidate_name,
+                test_request.candidate_email, 
+                f"{test_request.position} - {test_request.specialization}",
+                test_request.level,
+                "hr@halykbank.kz",  # Потом заменим на текущего пользователя
+                test_request.custom_requirements,
+                datetime.datetime.now() + datetime.timedelta(days=7)
+            )
+        finally:
+            await conn.close()
         
         return {
             "status": "success",
             "test_code": test_code,
             "test_url": f"/{test_code}",
-            "expires_at": test_sessions[test_code]["expires_at"].isoformat()
+            "message": f"Тест создан для {test_request.candidate_name}"
         }
         
     except Exception as e:
@@ -307,6 +301,20 @@ async def get_tests(creator_email: Optional[str] = None):
         "tests": tests,
         "total": len(tests)
     }
+    
+
+# Добавь этот роут после существующих страниц:
+
+@app.get("/create-test", response_class=HTMLResponse)
+async def create_test_page(request: Request):
+    """Страница создания теста"""
+    organization = get_organization_from_subdomain(request)
+    org_data = organizations[organization]
+    
+    return templates.TemplateResponse("create_test.html", {
+        "request": request,
+        "organization": org_data
+    })
 
 # ===== ФУНКЦИИ РАБОТЫ С CLAUDE =====
 
