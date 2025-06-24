@@ -740,133 +740,164 @@ async def complete_stage(stage: int, completion_data: dict):
         print(f"Ошибка завершения этапа: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-async def generate_screening_questions(position: str, level: str, specialization: str = "Общий"):
-    """Генерация вопросов скрининга на основе тегов технологий"""
+# Добавить в main.py после импортов
+from smart_questions import SmartQuestionGenerator
+
+# Создать глобальный экземпляр генератора
+question_generator = SmartQuestionGenerator()
+
+# ЗАМЕНИТЬ функцию generate_screening_questions
+async def generate_screening_questions(position: str, level: str, specialization: str = "Общий", candidate_name: str = ""):
+    """
+    Умная генерация скрининг-вопросов с персонализацией
+    """
     try:
-        print(f"🤖 Генерируем вопросы для {position} - {specialization} ({level})")
+        print(f"🧠 Генерируем УМНЫЕ вопросы для {candidate_name}: {position} - {specialization} ({level})")
         
-        # Определяем обязательные технологии/знания для этой позиции
-        required_skills = []
-        if position == "Data Scientist":
-            if specialization == "Computer Vision":
-                required_skills = ["Python", "Машинное обучение", "Компьютерное зрение", "OpenCV", "PyTorch"]
-            elif specialization == "NLP":
-                required_skills = ["Python", "Машинное обучение", "Обработка языка", "NLTK", "Transformers"]
-            elif specialization == "MLOps":
-                required_skills = ["Python", "Машинное обучение", "DevOps", "Docker", "Git"]
-            else:  # Общий
-                required_skills = ["Python", "Машинное обучение", "Статистика", "SQL", "Pandas/NumPy"]
-        elif position == "Data Analyst":
-            if specialization == "Business Intelligence":
-                required_skills = ["SQL", "Бизнес-аналитика", "Tableau/Power BI", "KPI и метрики", "Дашборды"]
-            elif specialization == "Marketing Analytics":
-                required_skills = ["SQL", "Маркетинговая аналитика", "Google Analytics", "Excel", "Метрики конверсии"]
-            else:  # Общий
-                required_skills = ["SQL", "Статистика", "Аналитическое мышление", "Excel", "Визуализация данных"]
-        elif position == "HR Specialist":
-            if specialization == "Recruiter":
-                required_skills = ["Методы подбора", "Интервьюирование", "LinkedIn/HH.ru", "Sourcing", "Boolean search"]
-            elif specialization == "L&D Specialist":
-                required_skills = ["Обучение взрослых", "Методы обучения", "LMS системы", "Оценка эффективности", "MS Office"]
-            else:  # Generalist
-                required_skills = ["Трудовое право РК", "HR процессы", "Рекрутинг", "Мотивация персонала", "MS Office"]
-        else:
-            # Для неизвестных позиций
-            required_skills = ["Профессиональные навыки", "Опыт работы", "Базовые знания"]
-        
-        # ПРАВИЛЬНЫЙ импорт для версии 1.x
-        from openai import OpenAI
-        from config import OPENAI_API_KEY
-        
-        print(f"🔑 API ключ OpenAI: {OPENAI_API_KEY[:20]}...{OPENAI_API_KEY[-10:] if OPENAI_API_KEY else 'ПУСТОЙ'}")
-        
-        client_openai = OpenAI(api_key=OPENAI_API_KEY)
-        
-        prompt = f"""
-        Создай 5 вопросов для СКРИНИНГА кандидата на позицию {position} - {specialization} уровня {level}.
-        
-        ЦЕЛЬ СКРИНИНГА: Отсеять 30-40% неподходящих кандидатов на раннем этапе. НЕ МУЧИТЬ людей, которые явно не подходят.
-        
-        ОБЯЗАТЕЛЬНЫЕ ОБЛАСТИ для проверки:
-        {', '.join(required_skills)}
-        
-        ТРЕБОВАНИЯ К ВОПРОСАМ:
-        - На русском языке
-        - ПОВЕРХНОСТНАЯ проверка базовых знаний (НЕ глубокие вопросы!)
-        - Хороший {level} специалист должен легко ответить
-        - Случайный человек или junior (если тестируем middle/senior) не ответит
-        - Каждый вопрос проверяет РАЗНЫЕ области из списка выше
-        - Ответ: 2-3 предложения максимум
-        - Справедливые и объективные
-        
-        ПРИМЕРЫ ХОРОШИХ СКРИНИНГ-ВОПРОСОВ:
-        - "Объясните разницу между..." (проверяет базовое понимание)
-        - "Когда используется..." (проверяет практические знания)
-        - "Перечислите основные..." (проверяет кругозор)
-        
-        ИЗБЕГАЙ:
-        - Слишком глубоких вопросов (это для 2 этапа)
-        - Вопросов, требующих большого ответа
-        - Узкоспециализированных деталей
-        
-        Верни JSON массив в формате:
-        [
-            {{"text": "Вопрос 1", "skill_area": "Python"}},
-            {{"text": "Вопрос 2", "skill_area": "SQL"}},
-            {{"text": "Вопрос 3", "skill_area": "Машинное обучение"}},
-            {{"text": "Вопрос 4", "skill_area": "Статистика"}},
-            {{"text": "Вопрос 5", "skill_area": "Pandas/NumPy"}}
-        ]
-        """
-        
-        print("🤖 Отправляем запрос к OpenAI...")
-        response = client_openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=1500,
-            temperature=0.7
+        # Используем умный генератор вместо OpenAI для базовых вопросов
+        smart_questions = question_generator.generate_unique_questions(
+            position=position,
+            specialization=specialization, 
+            level=level,
+            candidate_name=candidate_name,
+            stage=1,
+            count=5
         )
         
-        # ДОБАВЛЯЕМ DEBUG
-        raw_content = response.choices[0].message.content
-        print(f"🤖 Получили ответ от OpenAI: {raw_content[:200]}...")
+        # Конвертируем в нужный формат
+        questions = []
+        for sq in smart_questions:
+            questions.append({
+                "id": sq["id"],
+                "text": sq["text"], 
+                "skill_area": sq["area"],
+                "question_type": sq["question_type"],
+                "area_type": sq["type"]
+            })
         
-        if not raw_content:
-            raise ValueError("OpenAI вернул пустой ответ")
-        
-        # ИЗВЛЕКАЕМ JSON ИЗ MARKDOWN БЛОКА
-        json_content = raw_content.strip()
-        
-        # Убираем markdown обертку если есть
-        if json_content.startswith('```json'):
-            json_content = json_content.replace('```json', '').replace('```', '').strip()
-        elif json_content.startswith('```'):
-            json_content = json_content.replace('```', '').strip()
-        
-        print(f"🤖 Очищенный JSON: {json_content[:100]}...")
-        
-        import json
-        questions = json.loads(json_content)
-        
-        # Проверяем что получили массив
-        if not isinstance(questions, list):
-            raise ValueError(f"OpenAI вернул не массив: {type(questions)}")
-        
-        # Добавляем ID для каждого вопроса
-        for i, question in enumerate(questions):
-            question['id'] = f"q{i+1}"
-        
-        print(f"✅ Сгенерировано {len(questions)} скрининг-вопросов")
+        print(f"✅ Сгенерировано {len(questions)} уникальных вопросов")
         return questions
         
-    except json.JSONDecodeError as e:
-        print(f"❌ Ошибка парсинга JSON: {e}")
-        print(f"❌ Сырой ответ OpenAI: {raw_content if 'raw_content' in locals() else 'Неизвестно'}")
-        raise HTTPException(status_code=503, detail=f"OpenAI вернул некорректный JSON: {str(e)}")
     except Exception as e:
-        print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")
-        print(f"❌ Тип ошибки: {type(e)}")
-        raise HTTPException(status_code=503, detail=f"Ошибка ИИ: {str(e)}")
+        print(f"❌ Ошибка умной генерации: {e}")
+        # Fallback на OpenAI если что-то пошло не так
+        return await generate_openai_questions_fallback(position, level, specialization)
+
+# ОБНОВИТЬ вызов в API endpoint
+@app.post("/api/stage/{stage}/questions")
+async def generate_stage_questions(stage: int, request_data: dict):
+    """Генерация вопросов для этапа с персонализацией"""
+    try:
+        test_code = request_data.get('test_code')
+        position = request_data.get('position')
+        level = request_data.get('level')
+        
+        # ВАЖНО: Получаем имя кандидата из БД
+        conn = await get_db_connection()
+        test_info = await conn.fetchrow(
+            "SELECT candidate_name, position FROM tests WHERE test_code = $1", 
+            test_code
+        )
+        await conn.close()
+        
+        if not test_info:
+            raise HTTPException(status_code=404, detail="Тест не найден")
+        
+        candidate_name = test_info['candidate_name']
+        full_position = test_info['position']  # "Data Scientist - Computer Vision"
+        
+        # Парсим специализацию
+        if ' - ' in full_position:
+            main_position, specialization = full_position.split(' - ', 1)
+        else:
+            main_position = full_position
+            specialization = "Общий"
+        
+        if stage == 1:
+            # Генерируем УМНЫЕ скрининг-вопросы
+            questions = await generate_screening_questions(
+                position=main_position,
+                level=level, 
+                specialization=specialization,
+                candidate_name=candidate_name  # ← ПЕРСОНАЛИЗАЦИЯ!
+            )
+        elif stage == 2:
+            # Для глубоких вопросов можно использовать Claude/OpenAI
+            questions = await generate_deep_questions_ai(main_position, level, specialization, candidate_name)
+        elif stage == 3:
+            questions = await generate_bonus_questions_ai(main_position, level, test_code, candidate_name)
+        else:
+            raise HTTPException(status_code=400, detail="Неверный этап")
+        
+        # Сохраняем в БД как раньше...
+        conn = await get_db_connection()
+        try:
+            test_id = await conn.fetchval("SELECT id FROM tests WHERE test_code = $1", test_code)
+            
+            for i, question in enumerate(questions):
+                await conn.execute("""
+                    INSERT INTO test_questions (test_id, question_number, question_type, question_text)
+                    VALUES ($1, $2, $3, $4)
+                """, test_id, i + 1, f"stage_{stage}", question['text'])
+        finally:
+            await conn.close()
+        
+        return {"status": "success", "questions": questions}
+        
+    except Exception as e:
+        print(f"Ошибка генерации вопросов: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Вспомогательные функции для этапов 2-3 с ИИ
+async def generate_deep_questions_ai(position: str, level: str, specialization: str, candidate_name: str):
+    """Глубокие вопросы через Claude API с персонализацией"""
+    
+    # Создаем персональный контекст
+    personal_seed = question_generator._create_personal_seed(candidate_name, position, specialization)
+    
+    prompt = f"""
+    Создай 3 УГЛУБЛЕННЫХ вопроса для {position} - {specialization} уровня {level}.
+    
+    Кандидат: {candidate_name}
+    Персональный контекст: {personal_seed % 1000} (используй для уникальности)
+    
+    ТРЕБОВАНИЯ:
+    - Вопросы требуют развернутых ответов (3-5 предложений)
+    - Проверяют глубокое понимание и опыт
+    - НЕ должны быть одинаковыми для разных кандидатов
+    - Подходят для банковской сферы
+    - Справедливые для уровня {level}
+    
+    Верни JSON:
+    [{{"text": "Вопрос 1"}}, {{"text": "Вопрос 2"}}, {{"text": "Вопрос 3"}}]
+    """
+    
+    # Используем Claude для генерации
+    message = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=800,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    
+    # Парсим JSON ответ
+    import json
+    content = message.content[0].text.strip()
+    if content.startswith('```json'):
+        content = content.replace('```json', '').replace('```', '').strip()
+    
+    questions = json.loads(content)
+    
+    # Добавляем ID
+    for i, q in enumerate(questions):
+        q['id'] = f"deep_{personal_seed}_{i}"
+    
+    return questions
+
+# Аналогично для бонусных вопросов
+async def generate_bonus_questions_ai(position: str, level: str, test_code: str, candidate_name: str):
+    """Бонусные вопросы с персонализацией"""
+    # Реализация аналогична generate_deep_questions_ai
+    pass
 
 async def generate_deep_questions(position: str, level: str, test_code: str):
     """Генерация глубоких вопросов для этапа 2"""
