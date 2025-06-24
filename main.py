@@ -834,13 +834,23 @@ async def generate_screening_questions(position: str, level: str, specialization
         if not raw_content:
             raise ValueError("OpenAI вернул пустой ответ")
         
-        # Проверяем что это похоже на JSON
-        if not raw_content.strip().startswith('['):
-            print(f"❌ OpenAI вернул не JSON: {raw_content}")
-            raise ValueError(f"OpenAI вернул не JSON формат: {raw_content[:100]}")
+        # ИЗВЛЕКАЕМ JSON ИЗ MARKDOWN БЛОКА
+        json_content = raw_content.strip()
+        
+        # Убираем markdown обертку если есть
+        if json_content.startswith('```json'):
+            json_content = json_content.replace('```json', '').replace('```', '').strip()
+        elif json_content.startswith('```'):
+            json_content = json_content.replace('```', '').strip()
+        
+        print(f"🤖 Очищенный JSON: {json_content[:100]}...")
         
         import json
-        questions = json.loads(raw_content)
+        questions = json.loads(json_content)
+        
+        # Проверяем что получили массив
+        if not isinstance(questions, list):
+            raise ValueError(f"OpenAI вернул не массив: {type(questions)}")
         
         # Добавляем ID для каждого вопроса
         for i, question in enumerate(questions):
@@ -854,15 +864,9 @@ async def generate_screening_questions(position: str, level: str, specialization
         print(f"❌ Сырой ответ OpenAI: {raw_content if 'raw_content' in locals() else 'Неизвестно'}")
         raise HTTPException(status_code=503, detail=f"OpenAI вернул некорректный JSON: {str(e)}")
     except Exception as e:
-        print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: ИИ не смог сгенерировать вопросы!")
-        print(f"❌ Причина: {e}")
+        print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {e}")
         print(f"❌ Тип ошибки: {type(e)}")
-        
-        # НЕ ВОЗВРАЩАЕМ fallback! Говорим правду!
-        raise HTTPException(
-            status_code=503, 
-            detail=f"Ошибка ИИ: {str(e)}. Обратитесь к администратору или попробуйте создать тест заново."
-        )
+        raise HTTPException(status_code=503, detail=f"Ошибка ИИ: {str(e)}")
 
 async def generate_deep_questions(position: str, level: str, test_code: str):
     """Генерация глубоких вопросов для этапа 2"""
