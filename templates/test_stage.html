@@ -235,7 +235,13 @@
     <script>
         const testCode = '{{ test_code }}';
         const currentStage = {{ stage }};
-        const testData = {{ test|tojson }};
+        const testData = {
+            test_code: '{{ test.test_code }}',
+            candidate_name: '{{ test.candidate_name }}',
+            position: '{{ test.position }}',
+            level: '{{ test.level }}',
+            status: '{{ test.status }}'
+        };
         
         // Инициализация этапа
         document.addEventListener('DOMContentLoaded', function() {
