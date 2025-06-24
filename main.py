@@ -600,7 +600,203 @@ async def evaluate_answer(position: str, level: str, question: str, answer: str)
     return score
 
     
+# Добавь эти endpoints после существующих:
 
+@app.post("/api/stage/{stage}/questions")
+async def generate_stage_questions(stage: int, request_data: dict):
+    """Генерация вопросов для этапа"""
+    try:
+        test_code = request_data.get('test_code')
+        position = request_data.get('position') 
+        level = request_data.get('level')
+        
+        if stage == 1:
+            # Генерируем вопросы скрининга
+            questions = await generate_screening_questions(position, level)
+        elif stage == 2:
+            # Генерируем глубокие вопросы
+            questions = await generate_deep_questions(position, level, test_code)
+        elif stage == 3:
+            # Генерируем вопросы по доп.навыкам
+            questions = await generate_bonus_questions(position, level, test_code)
+        else:
+            raise HTTPException(status_code=400, detail="Неверный этап")
+        
+        # Сохраняем вопросы в БД
+        conn = await get_db_connection()
+        try:
+            test_id = await conn.fetchval("SELECT id FROM tests WHERE test_code = $1", test_code)
+            
+            for i, question in enumerate(questions):
+                await conn.execute("""
+                    INSERT INTO test_questions (test_id, question_number, question_type, question_text)
+                    VALUES ($1, $2, $3, $4)
+                """, test_id, i + 1, f"stage_{stage}", question['text'])
+        finally:
+            await conn.close()
+        
+        return {
+            "status": "success",
+            "questions": questions
+        }
+        
+    except Exception as e:
+        print(f"Ошибка генерации вопросов: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/stage/{stage}/complete")
+async def complete_stage(stage: int, completion_data: dict):
+    """Завершение этапа и оценка ответов"""
+    try:
+        test_code = completion_data.get('test_code')
+        answers = completion_data.get('answers', [])
+        
+        conn = await get_db_connection()
+        try:
+            # Обновляем ответы в БД
+            test_id = await conn.fetchval("SELECT id FROM tests WHERE test_code = $1", test_code)
+            
+            total_score = 0
+            for answer in answers:
+                question_id = answer.get('question_id')
+                answer_text = answer.get('answer')
+                
+                # Здесь будет оценка ответа через Claude API
+                score = await evaluate_answer_simple(answer_text)
+                total_score += score
+                
+                await conn.execute("""
+                    UPDATE test_questions 
+                    SET answer_text = $1, ai_score = $2, answered_at = NOW()
+                    WHERE id = $3
+                """, answer_text, score, question_id)
+            
+            # Обновляем статус теста
+            avg_score = total_score / len(answers) if answers else 0
+            
+            if stage == 1:
+                new_status = 'stage_1_completed'
+                await conn.execute("""
+                    UPDATE tests 
+                    SET status = $1, total_score = $2
+                    WHERE test_code = $3
+                """, new_status, avg_score, test_code)
+            elif stage == 2:
+                new_status = 'stage_2_completed'
+                await conn.execute("""
+                    UPDATE tests 
+                    SET status = $1, total_score = $2
+                    WHERE test_code = $3
+                """, new_status, avg_score, test_code)
+            elif stage == 3:
+                new_status = 'completed'
+                await conn.execute("""
+                    UPDATE tests 
+                    SET status = $1, completed_at = NOW(), total_score = $2
+                    WHERE test_code = $3
+                """, new_status, avg_score, test_code)
+        
+        finally:
+            await conn.close()
+        
+        # Определяем следующий этап
+        next_stage = None
+        if stage == 1 and avg_score >= 6:  # Проходной балл для скрининга
+            next_stage = {
+                "title": "Углубленное интервью",
+                "description": "3 больших вопроса с ИИ-диалогом (15 минут)"
+            }
+        elif stage == 2:
+            next_stage = {
+                "title": "Дополнительные навыки", 
+                "description": "Бонусные технологии (опционально)"
+            }
+        
+        return {
+            "status": "success",
+            "score": f"{avg_score:.1f}/10",
+            "next_stage": next_stage,
+            "message": "Этап завершен успешно!"
+        }
+        
+    except Exception as e:
+        print(f"Ошибка завершения этапа: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Функции генерации вопросов
+async def generate_screening_questions(position: str, level: str):
+    """Генерация вопросов скрининга"""
+    try:
+        prompt = f"""
+        Создай 5 вопросов для скрининга на позицию {position} уровня {level}.
+        
+        Требования:
+        - На русском языке
+        - Средней сложности (отсеивают 30-40% кандидатов)
+        - Требуют конкретных знаний, а не общих фраз
+        - Каждый вопрос проверяет разные области знаний
+        - Ответ должен быть 2-4 предложения
+        
+        Верни JSON массив в формате:
+        [
+            {{"text": "Вопрос 1"}},
+            {{"text": "Вопрос 2"}},
+            ...
+        ]
+        """
+        
+        message = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        import json
+        questions = json.loads(message.content[0].text)
+        
+        # Добавляем ID для каждого вопроса
+        for i, question in enumerate(questions):
+            question['id'] = f"q{i+1}"
+        
+        return questions
+        
+    except Exception as e:
+        print(f"Ошибка генерации вопросов: {e}")
+        # Fallback вопросы
+        return [
+            {"id": "q1", "text": "Объясните разницу между списком и кортежем в Python"},
+            {"id": "q2", "text": "Что такое SQL JOIN и когда его использовать?"},
+            {"id": "q3", "text": "Опишите процесс машинного обучения от данных до модели"},
+            {"id": "q4", "text": "Как вы бы оптимизировали медленный SQL запрос?"},
+            {"id": "q5", "text": "Объясните концепцию overfitting в машинном обучении"}
+        ]
+
+async def generate_deep_questions(position: str, level: str, test_code: str):
+    """Генерация глубоких вопросов для этапа 2"""
+    # Пока заглушка
+    return [
+        {"id": "deep1", "text": "Расскажите о своем самом сложном проекте в области данных"},
+        {"id": "deep2", "text": "Как бы вы решали задачу прогнозирования для банка?"},
+        {"id": "deep3", "text": "Объясните архитектуру ML pipeline в production"}
+    ]
+
+async def generate_bonus_questions(position: str, level: str, test_code: str):
+    """Генерация вопросов по дополнительным навыкам"""
+    # Пока заглушка
+    return [
+        {"id": "bonus1", "text": "Опыт работы с Docker контейнерами"},
+        {"id": "bonus2", "text": "Знание облачных платформ AWS/GCP"}
+    ]
+
+async def evaluate_answer_simple(answer_text: str):
+    """Простая оценка ответа (потом улучшим)"""
+    # Пока простая оценка по длине
+    if len(answer_text) < 50:
+        return 3
+    elif len(answer_text) < 150:
+        return 6
+    else:
+        return 8
 
 
 # ===== ОБРАБОТКА ОШИБОК =====
