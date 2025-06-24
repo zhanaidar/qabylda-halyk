@@ -286,19 +286,28 @@
                     body: JSON.stringify({
                         test_code: testCode,
                         position: testData.position,
-                        level: testData.level
+                        level: testData.level,
+                        specialization: testData.position.split(' - ')[1] || 'Общий'
                     })
                 });
+                
+                // Проверяем статус ответа
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Сервер вернул ошибку ${response.status}: ${errorText}`);
+                }
                 
                 const result = await response.json();
                 
                 if (result.status === 'success') {
                     displayQuestions(result.questions);
                 } else {
-                    showError('Ошибка загрузки вопросов: ' + result.message);
+                    // Показываем детальную ошибку
+                    showError('Ошибка ИИ: ' + (result.detail || result.message || 'Неизвестная ошибка'));
                 }
             } catch (error) {
-                showError('Ошибка соединения: ' + error.message);
+                console.error('Полная ошибка:', error);
+                showError('Ошибка загрузки вопросов: ' + error.message);
             }
         }
         
