@@ -439,30 +439,6 @@ async def admin_database_view(request: Request):
         return f"<h1>Ошибка: {e}</h1>"
 
     
-@app.get("/{test_code}", response_class=HTMLResponse)
-async def test_page(request: Request, test_code: str):
-    """Страница прохождения теста"""
-    try:
-        # Проверяем существует ли тест
-        conn = await get_db_connection()
-        test = await conn.fetchrow("SELECT * FROM tests WHERE test_code = $1", test_code)
-        await conn.close()
-        
-        if not test:
-            raise HTTPException(status_code=404, detail="Тест не найден")
-        
-        organization = get_organization_from_subdomain(request)
-        org_data = organizations[organization]
-        
-        return templates.TemplateResponse("test_interface.html", {
-            "request": request,
-            "test_code": test_code,
-            "test": dict(test),
-            "organization": org_data
-        })
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Тест не найден")
-    
     
 @app.get("/{test_code}/stage/{stage}", response_class=HTMLResponse)
 async def test_stage(request: Request, test_code: str, stage: int):
@@ -502,6 +478,30 @@ async def test_stage(request: Request, test_code: str, stage: int):
         })
     except Exception as e:
         raise HTTPException(status_code=404, detail="Ошибка загрузки этапа")
+    
+@app.get("/{test_code}", response_class=HTMLResponse)
+async def test_page(request: Request, test_code: str):
+    """Страница прохождения теста"""
+    try:
+        # Проверяем существует ли тест
+        conn = await get_db_connection()
+        test = await conn.fetchrow("SELECT * FROM tests WHERE test_code = $1", test_code)
+        await conn.close()
+        
+        if not test:
+            raise HTTPException(status_code=404, detail="Тест не найден")
+        
+        organization = get_organization_from_subdomain(request)
+        org_data = organizations[organization]
+        
+        return templates.TemplateResponse("test_interface.html", {
+            "request": request,
+            "test_code": test_code,
+            "test": dict(test),
+            "organization": org_data
+        })
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Тест не найден")
 
 # ===== ФУНКЦИИ РАБОТЫ С CLAUDE =====
 
