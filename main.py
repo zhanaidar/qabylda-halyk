@@ -442,6 +442,8 @@ async def admin_database_view(request: Request):
     
 @app.get("/{test_code}/stage/{stage}", response_class=HTMLResponse)
 async def test_stage(request: Request, test_code: str, stage: int):
+    stage = int(stage)  # Конвертируем внутри функции
+    print(f"🔍 test_stage called: {test_code}, stage: {stage}")
     """Этапы прохождения теста"""
     try:
         # Проверяем тест
