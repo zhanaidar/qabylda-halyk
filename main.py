@@ -462,6 +462,46 @@ async def test_page(request: Request, test_code: str):
         })
     except Exception as e:
         raise HTTPException(status_code=404, detail="Тест не найден")
+    
+    
+@app.get("/{test_code}/stage/{stage}", response_class=HTMLResponse)
+async def test_stage(request: Request, test_code: str, stage: int):
+    """Этапы прохождения теста"""
+    try:
+        # Проверяем тест
+        conn = await get_db_connection()
+        test = await conn.fetchrow("SELECT * FROM tests WHERE test_code = $1", test_code)
+        
+        if not test:
+            await conn.close()
+            raise HTTPException(status_code=404, detail="Тест не найден")
+        
+        # Проверяем валидность этапа
+        if stage not in [1, 2, 3]:
+            await conn.close()
+            raise HTTPException(status_code=404, detail="Неверный этап")
+        
+        # Обновляем статус если нужно
+        if stage == 1 and test['status'] == 'created':
+            await conn.execute(
+                "UPDATE tests SET status = 'stage_1', started_at = NOW() WHERE test_code = $1",
+                test_code
+            )
+        
+        await conn.close()
+        
+        organization = get_organization_from_subdomain(request)
+        org_data = organizations[organization]
+        
+        return templates.TemplateResponse("test_stage.html", {
+            "request": request,
+            "test_code": test_code,
+            "stage": stage,
+            "test": dict(test),
+            "organization": org_data
+        })
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Ошибка загрузки этапа")
 
 # ===== ФУНКЦИИ РАБОТЫ С CLAUDE =====
 

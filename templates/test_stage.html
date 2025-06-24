@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Этап {{ stage }} - {{ test.candidate_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, {{ organization.colors.primary }} 0%, #2a5298 50%, {{ organization.colors.primary }} 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .stage-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            color: {{ organization.colors.accent }};
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stage-info h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .stage-progress {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+        }
+
+        .progress-dot.active {
+            background: {{ organization.colors.primary }};
+        }
+
+        .progress-dot.completed {
+            background: #28a745;
+        }
+
+        .timer {
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .question-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 25px;
+            color: {{ organization.colors.accent }};
+        }
+
+        .question-number {
+            color: {{ organization.colors.primary }};
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #2C3E50;
+        }
+
+        .answer-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 20px;
+            border: 2px solid #E8F4F8;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: {{ organization.colors.primary }};
+            box-shadow: 0 0 0 4px rgba(29, 181, 132, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: {{ organization.colors.primary }};
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #159A73;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .question-counter {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: {{ organization.colors.primary }};
+        }
+
+        .stage-complete {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .stage-complete h2 {
+            color: {{ organization.colors.primary }};
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .next-stage-info {
+            background: #e8f4f8;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            color: #2C3E50;
+        }
+
+        @media (max-width: 768px) {
+            .stage-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .question-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка этапа -->
+        <div class="stage-header">
+            <div class="stage-info">
+                <h1>
+                    {% if stage == 1 %}
+                        🔍 Этап 1: Скрининг
+                    {% elif stage == 2 %}
+                        💬 Этап 2: Углубленное интервью
+                    {% else %}
+                        ⭐ Этап 3: Дополнительные навыки
+                    {% endif %}
+                </h1>
+                <p>{{ test.candidate_name }} • {{ test.position }}</p>
+            </div>
+            
+            <div class="stage-progress">
+                <div class="progress-dot {{ 'active' if stage == 1 else ('completed' if stage > 1 else '') }}"></div>
+                <div class="progress-dot {{ 'active' if stage == 2 else ('completed' if stage > 2 else '') }}"></div>
+                <div class="progress-dot {{ 'active' if stage == 3 else '' }}"></div>
+            </div>
+        </div>
+
+        <!-- Таймер -->
+        <div style="text-align: center; margin-bottom: 25px;">
+            <div class="timer" id="timer">
+                {% if stage == 1 %}15:00{% elif stage == 2 %}15:00{% else %}05:00{% endif %}
+            </div>
+        </div>
+
+        <!-- Контент этапа -->
+        <div id="stageContent">
+            <!-- Здесь будет загружаться содержимое этапа -->
+            <div class="question-card">
+                <div class="loading">
+                    <h3>🤖 Генерируем вопросы...</h3>
+                    <p>Подождите, система создает персональные вопросы для вас</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const testCode = '{{ test_code }}';
+        const currentStage = {{ stage }};
+        const testData = {{ test|tojson }};
+        
+        // Инициализация этапа
+        document.addEventListener('DOMContentLoaded', function() {
+            startStage();
+        });
+        
+        function startStage() {
+            console.log(`Начинаем этап ${currentStage}`);
+            
+            // Запускаем таймер
+            startTimer();
+            
+            // Загружаем вопросы для этапа
+            loadStageQuestions();
+        }
+        
+        function startTimer() {
+            let timeLeft = currentStage === 1 ? 15 * 60 : (currentStage === 2 ? 15 * 60 : 5 * 60);
+            const timerElement = document.getElementById('timer');
+            
+            const timer = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+                
+                timeLeft--;
+            }, 1000);
+        }
+        
+        async function loadStageQuestions() {
+            try {
+                const response = await fetch(`/api/stage/${currentStage}/questions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        test_code: testCode,
+                        position: testData.position,
+                        level: testData.level
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    displayQuestions(result.questions);
+                } else {
+                    showError('Ошибка загрузки вопросов: ' + result.message);
+                }
+            } catch (error) {
+                showError('Ошибка соединения: ' + error.message);
+            }
+        }
+        
+        function displayQuestions(questions) {
+            const content = document.getElementById('stageContent');
+            content.innerHTML = '';
+            
+            questions.forEach((question, index) => {
+                const questionCard = createQuestionCard(question, index);
+                content.appendChild(questionCard);
+            });
+            
+            // Добавляем кнопку завершения этапа
+            const controls = document.createElement('div');
+            controls.className = 'controls';
+            controls.innerHTML = `
+                <div class="question-counter">Вопросов: ${questions.length}</div>
+                <button class="btn btn-primary" onclick="completeStage()">
+                    Завершить этап
+                </button>
+            `;
+            content.appendChild(controls);
+        }
+        
+        function createQuestionCard(question, index) {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <div class="question-number">Вопрос ${index + 1}</div>
+                <div class="question-text">${question.text}</div>
+                <textarea 
+                    class="answer-input" 
+                    id="answer_${index}"
+                    placeholder="Введите ваш ответ здесь..."
+                    data-question-id="${question.id}"
+                ></textarea>
+            `;
+            return card;
+        }
+        
+        async function completeStage() {
+            // Собираем ответы
+            const answers = [];
+            document.querySelectorAll('.answer-input').forEach(input => {
+                if (input.value.trim()) {
+                    answers.push({
+                        question_id: input.dataset.questionId,
+                        answer: input.value.trim()
+                    });
+                }
+            });
+            
+            if (answers.length === 0) {
+                alert('Пожалуйста, ответьте хотя бы на один вопрос');
+                return;
+            }
+            
+            // Отправляем ответы
+            try {
+                const response = await fetch(`/api/stage/${currentStage}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        test_code: testCode,
+                        stage: currentStage,
+                        answers: answers
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStageComplete(result);
+                } else {
+                    showError('Ошибка сохранения: ' + result.message);
+                }
+            } catch (error) {
+                showError('Ошибка отправки: ' + error.message);
+            }
+        }
+        
+        function showStageComplete(result) {
+            const content = document.getElementById('stageContent');
+            
+            let nextStageInfo = '';
+            if (result.next_stage) {
+                nextStageInfo = `
+                    <div class="next-stage-info">
+                        <h4>Следующий этап: ${result.next_stage.title}</h4>
+                        <p>${result.next_stage.description}</p>
+                        <div style="margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="proceedToNextStage()">
+                                Продолжить сейчас
+                            </button>
+                            <button class="btn btn-secondary" onclick="takePause()">
+                                Сделать перерыв
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = `
+                <div class="question-card">
+                    <div class="stage-complete">
+                        <h2>✅ Этап завершен!</h2>
+                        <p>Ваши ответы сохранены и будут проанализированы.</p>
+                        ${result.score ? `<p><strong>Результат:</strong> ${result.score}</p>` : ''}
+                        ${nextStageInfo}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function proceedToNextStage() {
+            window.location.href = `/${testCode}/stage/${currentStage + 1}`;
+        }
+        
+        function takePause() {
+            alert('Следующий этап будет доступен в течение 12 часов');
+            window.location.href = `/${testCode}`;
+        }
+        
+        function timeUp() {
+            alert('Время этапа истекло!');
+            completeStage();
+        }
+        
+        function showError(message) {
+            const content = document.getElementById('stageContent');
+            content.innerHTML = `
+                <div class="question-card">
+                    <div style="text-align: center; color: #dc3545;">
+                        <h3>❌ Ошибка</h3>
+                        <p>${message}</p>
+                        <button class="btn btn-secondary" onclick="location.reload()">
+                            Попробовать снова
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
