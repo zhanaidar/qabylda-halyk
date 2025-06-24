@@ -740,16 +740,43 @@ async def complete_stage(stage: int, completion_data: dict):
         print(f"Ошибка завершения этапа: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Функции генерации вопросов
 async def generate_screening_questions(position: str, level: str, specialization: str = "Общий"):
-    """Генерация вопросов скрининга на основе тегов технологий"""
     try:
         print(f"🤖 Генерируем вопросы для {position} - {specialization} ({level})")
         
-        # ... код получения required_skills ...
-        # ... код формирования prompt ...
+        # Определяем required_skills (твой существующий код)
+        required_skills = []
+        if position == "Data Scientist":
+            if specialization == "Computer Vision":
+                required_skills = ["Python", "Машинное обучение", "Компьютерное зрение", "OpenCV", "PyTorch"]
+            # ... остальные специализации
+        elif position == "HR Specialist":
+            if specialization == "Recruiter":
+                required_skills = ["Методы подбора", "Интервьюирование", "LinkedIn/HH.ru", "Sourcing", "Boolean search"]
+            # ... остальные
         
-        response = openai.chat.completions.create(
+        # ПРАВИЛЬНЫЙ импорт для версии 1.x
+        from openai import OpenAI
+        from config import OPENAI_API_KEY
+        
+        client_openai = OpenAI(api_key=OPENAI_API_KEY)
+        
+        prompt = f"""
+        Создай 5 вопросов для СКРИНИНГА кандидата на позицию {position} - {specialization} уровня {level}.
+        
+        ЦЕЛЬ СКРИНИНГА: Отсеять 30-40% неподходящих кандидатов на раннем этапе.
+        
+        ОБЯЗАТЕЛЬНЫЕ ОБЛАСТИ для проверки: {', '.join(required_skills)}
+        
+        ТРЕБОВАНИЯ К ВОПРОСАМ:
+        - На русском языке
+        - ПОВЕРХНОСТНАЯ проверка базовых знаний
+        - Хороший {level} специалист должен легко ответить
+        
+        Верни JSON массив: [{{"text": "Вопрос 1", "skill_area": "Python"}}, ...]
+        """
+        
+        response = client_openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1500,
@@ -759,7 +786,6 @@ async def generate_screening_questions(position: str, level: str, specialization
         import json
         questions = json.loads(response.choices[0].message.content)
         
-        # Добавляем ID для каждого вопроса
         for i, question in enumerate(questions):
             question['id'] = f"q{i+1}"
         
@@ -769,13 +795,7 @@ async def generate_screening_questions(position: str, level: str, specialization
     except Exception as e:
         print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: ИИ не смог сгенерировать вопросы!")
         print(f"❌ Причина: {e}")
-        print(f"❌ Тип ошибки: {type(e)}")
-        
-        # НЕ ВОЗВРАЩАЕМ fallback! Говорим правду!
-        raise HTTPException(
-            status_code=503, 
-            detail=f"Ошибка ИИ: {str(e)}. Обратитесь к администратору или попробуйте создать тест заново."
-        )
+        raise HTTPException(status_code=503, detail=f"Ошибка ИИ: {str(e)}")
 
 async def generate_deep_questions(position: str, level: str, test_code: str):
     """Генерация глубоких вопросов для этапа 2"""
